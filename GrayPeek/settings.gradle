@@ -1,3 +1,32 @@
+import java.util.Base64
+import java.util.zip.ZipInputStream
+
+// Bootstrap the app module from the bundled source archive when this branch is
+// built by GitHub Actions. This keeps the repository branch isolated from main.
+def appBuild = file('app/build.gradle')
+if (!appBuild.exists()) {
+    def bundle = new File(settingsDir.parentFile, 'graypeek_project_v2.b64')
+    if (bundle.exists()) {
+        byte[] zipBytes = Base64.decoder.decode(bundle.text.replaceAll('\\s+', ''))
+        def zis = new ZipInputStream(new ByteArrayInputStream(zipBytes))
+        def entry
+        while ((entry = zis.nextEntry) != null) {
+            if (!entry.isDirectory() && entry.name.startsWith('GrayPeek/app/')) {
+                def rel = entry.name.substring('GrayPeek/'.length())
+                def out = new File(settingsDir, rel)
+                out.parentFile.mkdirs()
+                out.withOutputStream { os ->
+                    byte[] buf = new byte[8192]
+                    int n
+                    while ((n = zis.read(buf)) > 0) os.write(buf, 0, n)
+                }
+            }
+            zis.closeEntry()
+        }
+        zis.close()
+    }
+}
+
 pluginManagement {
     repositories {
         google()

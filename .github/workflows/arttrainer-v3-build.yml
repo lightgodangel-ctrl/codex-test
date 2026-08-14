@@ -3,7 +3,7 @@ name: Build ArtTrainer v3 APK
 on:
   push:
     paths:
-      - 'arttrainer_build/source_v3.b64'
+      - 'arttrainer_build/project/**'
       - '.github/workflows/arttrainer-v3-build.yml'
   workflow_dispatch:
 
@@ -19,25 +19,21 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.13'
-      - name: Decode source
-        run: |
-          mkdir -p /tmp/arttrainer
-          base64 -d arttrainer_build/source_v3.b64 > /tmp/arttrainer/source.zip
-          unzip -q /tmp/arttrainer/source.zip -d /tmp/arttrainer/src
+      - uses: android-actions/setup-android@v3
       - name: Install Android SDK packages
         run: |
           yes | sdkmanager --licenses >/dev/null || true
           sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
       - name: Build APK
-        working-directory: /tmp/arttrainer/src/ArtTrainer_AllInOne_v3
+        working-directory: arttrainer_build/project
         run: gradle --no-daemon :app:assembleDebug
       - name: Prepare artifact
         run: |
           mkdir -p artifact
-          cp /tmp/arttrainer/src/ArtTrainer_AllInOne_v3/app/build/outputs/apk/debug/app-debug.apk artifact/ArtTrainer_AllInOne_v3_MacroDroid.apk
+          cp arttrainer_build/project/app/build/outputs/apk/debug/app-debug.apk artifact/ArtTrainer_AllInOne_v3_MacroDroid.apk
       - uses: actions/upload-artifact@v4
         with:
           name: ArtTrainer_AllInOne_v3_MacroDroid

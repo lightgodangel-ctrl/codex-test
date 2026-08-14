@@ -26,6 +26,14 @@ jobs:
           rm -rf /tmp/arttrainer
           mkdir -p /tmp/arttrainer
           unzip -q /tmp/arttrainer.zip -d /tmp/arttrainer
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('/tmp/arttrainer/ArtTrainer_AllInOne_v3/app/src/main/java/com/arttrainer/toolbox/OverlayService.java')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace('toast("흑백 신호 전송");', 'Toast.makeText(this, "흑백 신호 전송", Toast.LENGTH_SHORT).show();')
+          s=s.replace('toast("색상 반전 신호 전송");', 'Toast.makeText(this, "색상 반전 신호 전송", Toast.LENGTH_SHORT).show();')
+          p.write_text(s, encoding='utf-8')
+          PY
 
       - uses: actions/setup-java@v4
         with:

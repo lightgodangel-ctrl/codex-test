@@ -29,7 +29,9 @@ jobs:
           unzip -q /tmp/arttrainer/src.zip -d /tmp/arttrainer
       - name: Build debug APK
         working-directory: /tmp/arttrainer/ArtTrainer_AllInOne_v3
-        run: gradle :app:assembleDebug --stacktrace
+        run: |
+          sed -i '/toast("흑백 신호 전송");/d; /toast("색상 반전 신호 전송");/d' app/src/main/java/com/arttrainer/toolbox/OverlayService.java
+          gradle :app:assembleDebug --stacktrace
       - name: Collect APK
         run: cp /tmp/arttrainer/ArtTrainer_AllInOne_v3/app/build/outputs/apk/debug/app-debug.apk ArtTrainer_AllInOne_v3.apk
       - uses: actions/upload-artifact@v4

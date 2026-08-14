@@ -1,0 +1,60 @@
+name: Build ArtTrainer v3
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '.github/workflows/build-arttrainer-v3.yml'
+      - 'arttrainer_build/src.part*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Reconstruct source
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cat arttrainer_build/src.part00 arttrainer_build/src.part01 arttrainer_build/src.part02 arttrainer_build/src.part03 arttrainer_build/src.part04 > /tmp/arttrainer.b64
+          base64 -d /tmp/arttrainer.b64 > /tmp/arttrainer.zip
+          unzip -q /tmp/arttrainer.zip -d /tmp/project
+          unzip -t /tmp/arttrainer.zip
+          sed -i "s/version '8.13.2'/version '8.7.3'/" /tmp/project/ArtTrainer_AllInOne_v3/build.gradle
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: android-actions/setup-android@v3
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Build APK
+        working-directory: /tmp/project/ArtTrainer_AllInOne_v3
+        run: gradle --no-daemon :app:assembleDebug
+
+      - name: Verify APK
+        shell: bash
+        run: |
+          set -euxo pipefail
+          APK=/tmp/project/ArtTrainer_AllInOne_v3/app/build/outputs/apk/debug/app-debug.apk
+          test -s "$APK"
+          sha256sum "$APK"
+          cp "$APK" "$GITHUB_WORKSPACE/ArtTrainer_AllInOne_v3.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ArtTrainer-AllInOne-v3-APK
+          path: ArtTrainer_AllInOne_v3.apk
+          if-no-files-found: error
+          retention-days: 7

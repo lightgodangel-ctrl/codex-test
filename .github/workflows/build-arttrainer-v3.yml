@@ -28,7 +28,7 @@ jobs:
           unzip -t /tmp/arttrainer.zip
           sed -i "s/version '8.13.2'/version '8.7.3'/" /tmp/project/ArtTrainer_AllInOne_v3/build.gradle
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
@@ -41,20 +41,31 @@ jobs:
 
       - name: Build APK
         working-directory: /tmp/project/ArtTrainer_AllInOne_v3
-        run: gradle --no-daemon :app:assembleDebug
+        shell: bash
+        run: |
+          set +e
+          gradle --no-daemon :app:assembleDebug 2>&1 | tee "$GITHUB_WORKSPACE/build.log"
+          code=${PIPESTATUS[0]}
+          exit $code
 
       - name: Verify APK
+        if: success()
         shell: bash
         run: |
           set -euxo pipefail
           APK=/tmp/project/ArtTrainer_AllInOne_v3/app/build/outputs/apk/debug/app-debug.apk
           test -s "$APK"
-          sha256sum "$APK"
+          sha256sum "$APK" | tee "$GITHUB_WORKSPACE/apk.sha256"
           cp "$APK" "$GITHUB_WORKSPACE/ArtTrainer_AllInOne_v3.apk"
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload build diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          name: ArtTrainer-AllInOne-v3-APK
-          path: ArtTrainer_AllInOne_v3.apk
-          if-no-files-found: error
+          name: ArtTrainer-v3-build-output
+          path: |
+            build.log
+            apk.sha256
+            ArtTrainer_AllInOne_v3.apk
+          if-no-files-found: warn
           retention-days: 7

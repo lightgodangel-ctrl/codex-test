@@ -1,0 +1,40 @@
+name: ArtTrainer v3 build
+
+on:
+  push:
+    paths:
+      - 'arttrainer_build/**'
+      - '.github/workflows/arttrainer-v3-build.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+      - name: Restore source
+        run: |
+          base64 -d arttrainer_build/source.zip.b64 > /tmp/arttrainer.zip
+          unzip -q /tmp/arttrainer.zip -d /tmp/arttrainer
+      - name: Build debug APK
+        working-directory: /tmp/arttrainer/ArtTrainer_AllInOne_v3
+        run: gradle --no-daemon :app:assembleDebug
+      - name: Stage artifact
+        run: |
+          mkdir -p out
+          cp /tmp/arttrainer/ArtTrainer_AllInOne_v3/app/build/outputs/apk/debug/app-debug.apk out/ArtTrainer_AllInOne_v3.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ArtTrainer-AllInOne-v3
+          path: out/ArtTrainer_AllInOne_v3.apk
+          if-no-files-found: error

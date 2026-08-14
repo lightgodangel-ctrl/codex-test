@@ -27,6 +27,9 @@ jobs:
           unzip -q /tmp/arttrainer.zip -d /tmp/project
           unzip -t /tmp/arttrainer.zip
           sed -i "s/version '8.13.2'/version '8.7.3'/" /tmp/project/ArtTrainer_AllInOne_v3/build.gradle
+          FILE=/tmp/project/ArtTrainer_AllInOne_v3/app/src/main/java/com/arttrainer/toolbox/OverlayService.java
+          sed -i 's/toast("흑백 신호 전송");/Toast.makeText(this, "흑백 신호 전송", Toast.LENGTH_SHORT).show();/' "$FILE"
+          sed -i 's/toast("색상 반전 신호 전송");/Toast.makeText(this, "색상 반전 신호 전송", Toast.LENGTH_SHORT).show();/' "$FILE"
 
       - uses: actions/setup-java@v5
         with:

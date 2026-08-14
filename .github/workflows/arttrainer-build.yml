@@ -1,0 +1,37 @@
+name: ArtTrainer v3 Build
+on:
+  push:
+    paths:
+      - 'arttrainer_build/chunk_*'
+      - '.github/workflows/arttrainer-build.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Install Android SDK
+        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+      - name: Decode source
+        run: |
+          mkdir -p /tmp/arttrainer
+          cat arttrainer_build/chunk_* | base64 -d > /tmp/arttrainer/src.zip
+          unzip -q /tmp/arttrainer/src.zip -d /tmp/arttrainer
+      - name: Build debug APK
+        working-directory: /tmp/arttrainer/ArtTrainer_AllInOne_v3
+        run: gradle :app:assembleDebug --stacktrace
+      - name: Collect APK
+        run: cp /tmp/arttrainer/ArtTrainer_AllInOne_v3/app/build/outputs/apk/debug/app-debug.apk ArtTrainer_AllInOne_v3.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ArtTrainer_AllInOne_v3
+          path: ArtTrainer_AllInOne_v3.apk

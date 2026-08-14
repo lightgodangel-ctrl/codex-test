@@ -2,7 +2,7 @@ name: ArtTrainer v3 Build
 on:
   push:
     paths:
-      - 'arttrainer_build/chunk_*'
+      - 'arttrainer_build/chunk_[0-9][0-9]'
       - '.github/workflows/arttrainer-build.yml'
   workflow_dispatch:
 
@@ -24,7 +24,8 @@ jobs:
       - name: Decode source
         run: |
           mkdir -p /tmp/arttrainer
-          cat arttrainer_build/chunk_* | base64 -d > /tmp/arttrainer/src.zip
+          cat arttrainer_build/chunk_[0-9][0-9] | base64 -d > /tmp/arttrainer/src.zip
+          unzip -t /tmp/arttrainer/src.zip
           unzip -q /tmp/arttrainer/src.zip -d /tmp/arttrainer
       - name: Build debug APK
         working-directory: /tmp/arttrainer/ArtTrainer_AllInOne_v3
